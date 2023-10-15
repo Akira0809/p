@@ -134,80 +134,81 @@ class ChatConsumer(_BaseConsumer):
 
     # WebSocketからメッセージを受信
     async def receive_json(self, content):
+        user = self.scope["user"]
+        message = content["content"]
+        await self.create_message(user, message)
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "send_chat_message",
+                "msg_type": "user_message",
+                "username": str(user),
+                "message": message,
+            },
+        )
+        log = f"Human: {message}\n"
+
+        ai_choices = [
+            (self.room.ChatGPT, "chatGPT"),
+            (self.room.Claude2, "Claude2"),
+            (self.room.PaLM2, "PaLM2"),
+            (self.room.LLaMA, "LLaMA"),
+        ]
+        # ランダムな順序でAIを処理するためにリストをシャッフル
+        random.shuffle(ai_choices)
+
+        # シャッフルされた順序でAIを処理
+        for ai_selected, ai_name in ai_choices:
+            if ai_selected:
+                print(f"{ai_name} is selected")
+                log += f"{ai_name}: {await self.process_ai_message(ai_name, log)}\n"
+                print(log)
+
+    async def process_ai_message(self, ai_name, log):
         try:
-            user = self.scope["user"]
-            message = content["content"]
-            await self.create_message(user, message)
+            # AIの処理を非同期タスクで実行
+            response = await self.run_ai(ai_name, log)
+
             await self.channel_layer.group_send(
                 self.group_name,
                 {
                     "type": "send_chat_message",
                     "msg_type": "user_message",
-                    "username": str(user),
-                    "message": message,
+                    "username": ai_name,
+                    "message": response,
                 },
             )
-            log = f"Human: {message}\n"
-
-            # ----------------- この辺からAI返信部分 ----------------#
-
-            # ユーザー会得
-            @sync_to_async
-            def get_chatgpt_user(ainame):
-                try:
-                    chatgpt_user = User.objects.get(username=ainame)
-                    return chatgpt_user
-                except User.DoesNotExist:
-                    return None
-
-            # aiメッセージ送信&保存
-            async def ai_Message(AI_name, Log):
-                # AIが送信するメッセージ内容
-                if AI_name == "chatGPT":
-                    AI_Message = self.ai.ChatGPT(User_message=Log)
-                elif AI_name == "Claude2":
-                    AI_Message = self.ai.Claude(User_message=Log)
-                elif AI_name == "PaLM2":
-                    AI_Message = self.ai.Palm2(User_message=Log)
-                else:
-                    AI_Message = self.ai.Llama(User_message=Log)
-                # AIのユーザー情報
-                AI_user = await get_chatgpt_user(AI_name)
-
-                # DBに保存
-                await self.create_message(AI_user, AI_Message)
-
-                # 送信
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {
-                        "type": "send_chat_message",
-                        "msg_type": "user_message",
-                        "username": str(AI_user),
-                        "message": AI_Message,
-                    },
-                )
-
-                return AI_Message
-
-            ai_choices = [
-                (self.room.ChatGPT, "chatGPT"),
-                (self.room.Claude2, "Claude2"),
-                (self.room.PaLM2, "PaLM2"),
-                (self.room.LLaMA, "LLaMA"),
-            ]
-            # ランダムな順序でAIを処理するためにリストをシャッフル
-            random.shuffle(ai_choices)
-
-            # シャッフルされた順序でAIを処理
-            for ai_selected, ai_name in ai_choices:
-                if ai_selected:
-                    print(f"{ai_name} is selected")
-                    log += f"{ai_name}: {await ai_Message(ai_name, log)}\n"
-                    print(log)
-
         except Exception as err:
             raise Exception(err)
+
+        return response
+
+    async def run_ai(self, ai_name, log):
+        # AIメッセージを生成
+        if ai_name == "chatGPT":
+            AI_Message = self.ai.ChatGPT(User_message=log)
+        elif ai_name == "Claude2":
+            AI_Message = self.ai.Claude(User_message=log)
+        elif ai_name == "PaLM2":
+            AI_Message = self.ai.Palm2(User_message=log)
+        else:
+            AI_Message = self.ai.Llama(User_message=log)
+
+        # AIのユーザー情報
+        AI_user = await self.get_chatgpt_user(ai_name)
+
+        # DBに保存
+        await self.create_message(AI_user, AI_Message)
+
+        return AI_Message
+
+    @sync_to_async
+    def get_chatgpt_user(self, ainame):
+        try:
+            chatgpt_user = User.objects.get(username=ainame)
+            return chatgpt_user
+        except User.DoesNotExist:
+            return None
 
     # チャットメッセージの送信
     async def send_chat_message(self, event):
@@ -265,7 +266,7 @@ class AI:
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            max_tokens = 300,
+            max_tokens=300,
             messages=[
                 {"role": "system", "content": self.prompt},
                 {"role": "user", "content": input_text},
@@ -316,7 +317,11 @@ class AI:
 
         output = replicate.run(
             "meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3",
-            input={"prompt": input_text, "system_prompt": self.prompt, "max_new_tokens": 300},
+            input={
+                "prompt": input_text,
+                "system_prompt": self.prompt,
+                "max_new_tokens": 300,
+            },
         )
 
         s = ""
