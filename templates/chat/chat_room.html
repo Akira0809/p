@@ -1,132 +1,766 @@
-{% extends 'base.html' %}
 {% load humanize %}
+<!DOCTYPE html>
+<html lang="ja">
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-12">
-        <div class="row">
-            <div class="col-12 col-md-10">
-                <h3 class="h3">Chat Room -{{ room|stringformat:"s" }}-</h3>
-            </div>
-            <div class="col-12 col-md-2">
-                <a href="{% url 'chat:index' %}" class="btn btn-outline-secondary btn-block">Back</a>
-            </div>
+<link>
+<meta charset="UTF-8"/>
+<title>Bootstrapで作ったチャットのデザインのサンプルを紹介！</title>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+      integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous"/>
+<link rel="stylesheet" href="index.css"/>
+<style>
+    * {
+        margin: 0;
+
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #a9a9a9;
+        margin: 0;
+    }
+
+    header {
+        display: flex;
+        width: 100%;
+        height: 100px;
+        background-color: white;
+        align-items: center;
+        position: fixed;
+        justify-content: center;
+    }
+
+    .title {
+        margin: 5rem auto 5rem auto;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .container {
+        display: flex;
+        justify-content: space-around;
+
+    }
+
+    .main {
+        position: fixed;
+        top: 100px;
+        width: 100%;
+        /* overflow-y: scroll; */
+        height: 100vh;
+        box-sizing: border-box;
+        padding: 20px;
+        color: black;
+        background-color: white;
+    }
+
+    .chat {
+        max-width: 80%;
+        margin-left: 20%;
+        height: 80%;
+        overflow-y: auto;
+    }
+
+
+    nav {
+        width: 20%;
+        position: fixed;
+        display: block;
+        justify-content: center;
+        /* アイテムを水平方向に中央に配置 */
+        color: #a9a9a9;
+        background-color: #282828;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transition: all 0.5s;
+        z-index: 3;
+        opacity: 0;
+    }
+
+    @media screen and (max-width: 1000px) {
+        nav {
+            width: 80%;
+            position: fixed;
+            display: block;
+            justify-content: center;
+            /* アイテムを水平方向に中央に配置 */
+            color: #a9a9a9;
+            background-color: #282828;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            transition: all 0.5s;
+            z-index: 3;
+            opacity: 0;
+        }
+
+        .chat {
+            max-width: 100%;
+            margin: 0 auto;
+            height: 80%;
+            overflow-y: auto;
+        }
+    }
+
+
+    .open nav {
+        left: 0;
+        opacity: 1;
+    }
+
+    nav .nav_header,
+    nav .inner {
+        padding: 10px;
+    }
+
+    .menu li:first-child {
+        flex: 1;
+        /* Sets a flex-grow value of 3 for the first item */
+    }
+
+    .menu li:last-child {
+        flex: 1;
+        /* Sets a flex-grow value of 1 for the second item */
+    }
+
+    nav .nav_header .menu {
+        list-style: none;
+        margin: 0;
+        padding: 0px;
+        display: flex;
+
+    }
+
+    nav .inner ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    nav .inner ul li {
+        margin: 0;
+        border-bottom: 1px solid #333;
+    }
+
+    nav .nav_header .menu li {
+        width: 100%;
+        border: solid 1px #FFFFFF;
+        border-radius: 10px;
+        margin-right: 2%;
+    }
+
+    nav .nav_header .menu li a,
+    nav .inner ul li a,
+    nav .inner .member li,
+    nav .nav_footter {
+        display: block;
+        text-decoration: none;
+        color: #FFFFFF;
+        font-size: 14px;
+        padding: 1rem;
+        transition-duration: 0.2s;
+        text-align: center;
+    }
+
+    nav .display_room {
+        border-top: solid 1px #FFFFFF;
+        border-bottom: solid 1px #FFFFFF;
+    }
+
+    nav .display_room li a {
+        margin: 0.5rem 0;
+    }
+
+
+    nav .nav_footter {
+        align-items: flex-end;
+    }
+
+    nav .inner ul li a:hover,
+    nav .menu ul li a:hover,
+    nav .inner .member li:hover {
+        background-color: #76A1B8;
+        color: #FFFFFF;
+        opacity: 0.4;
+    }
+
+    .nav_footter {
+        position: fixed;
+        /* or you can use absolute if that fits your design better */
+        bottom: 0;
+        /* optional: for better visibility */
+        text-align: center;
+        /* optional: to center the text */
+    }
+
+
+    .toggle-btn {
+        display: none;
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        width: 30px;
+        height: 30px;
+        z-index: 3;
+        cursor: pointer;
+        color: #7cb78a;
+    }
+
+    .toggle-btn span {
+        position: absolute;
+        display: block;
+        left: 0;
+        width: 30px;
+        height: 2px;
+        background-color: #7cb78a;
+        transition: all 0.5s;
+        border-radius: 4px;
+    }
+
+    .toggle-btn span:nth-child(1) {
+        top: 4px;
+    }
+
+    .toggle-btn span:nth-child(2) {
+        top: 14px;
+    }
+
+    .toggle-btn span:nth-child(3) {
+        bottom: 4px;
+    }
+
+
+    .open #mask {
+        display: block;
+        background-color: #000;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        position: fixed;
+        opacity: 0.8;
+        cursor: pointer;
+    }
+
+
+    .sidebar {
+        left: 0;
+        transition: left 0.3s ease-in-out;
+        background-color: white;
+    }
+
+    /* メディアクエリを使用して、画面幅が小さい場合にバーガーメニューを表示 */
+    @media screen and (max-width: 1000px) {
+        .toggle-btn {
+            display: flex;
+            color: #7cb78a;
+
+        }
+    }
+
+    .fs-5 {
+        color: white;
+    }
+
+    .icon {
+        text-align: center;
+        width: 10%;
+    }
+
+    .message {
+        display: flex;
+        width: 100%;
+
+    }
+
+    .message-me {
+        display: flex;
+        width: 100%;
+        /* text-align: right; */
+        /* margin-left: 5rem; */
+    }
+
+    .message-icon {
+        color: #EADFCA;
+    }
+
+    .message-text1 {
+        background-color: #76A1B8;
+        padding: 0 1rem;
+        /* 左右の余白を追加 */
+        display: inline-block;
+        max-width: 70%;
+        border-radius: 1rem;
+    }
+
+    .message-text2 {
+        background-color: #EADFCA;
+        display: inline-block;
+        max-width: 70%;
+        border-radius: 1rem;
+    }
+
+    .message-text3 {
+        background-color: #254678;
+        display: inline-block;
+        color: #E1E1E1;
+        max-width: 70%;
+        border-radius: 1rem;
+    }
+
+    .message-text4 {
+        background-color: #9EC3BC;
+        display: inline-block;
+        max-width: 70%;
+        border-radius: 1rem;
+    }
+
+    .message-text-me {
+        display: inline-block;
+        max-width: 70%;
+        border-radius: 1rem;
+        background-color: #BBE3F5;
+    }
+
+    .message-icon1 {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        line-height: 48px;
+        background-color: #76A1B8;
+    }
+
+    .message-icon2 {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        line-height: 48px;
+        background-color: #EADFCA;
+    }
+
+    .message-icon3 {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        line-height: 48px;
+        background-color: #254678;
+    }
+
+    .message-icon4 {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        line-height: 48px;
+        background-color: #9EC3BC;
+    }
+
+    .message-icon-me {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        line-height: 48px;
+        background-color: #BBE3F5;
+    }
+
+    .list-group-item {
+        background-color: white;
+    }
+
+    .input-field {
+        width: 100%;
+        position: fixed;
+        background-color: white;
+        padding: 0.1rem;
+        bottom: -2rem;
+    }
+
+    .form {
+        margin-bottom: -1.1rem;
+        width: 100%;
+        height: 5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #c0c0c0;
+    }
+
+    .input-field .form .textbox {
+        width: 70%;
+        height: 60px;
+        border: none;
+        /* transform: translate(-50%, -50%); */
+        background-color: #ffffff;
+        border-radius: 1rem;
+        margin-right: 1rem;
+        margin-left: 17%;
+    }
+
+    .textbox::placeholder {
+        text-indent: 10px;
+        /* プレースホルダーの右側の余白を調整 */
+    }
+
+    .input-field .form .button {
+        /* または、適切な位置に設定 */
+        border: none;
+        /* 枠線を無効にする */
+        background-color: #7cb78a;
+        border-radius: 0.5rem;
+        width: 3rem;
+        height: 3rem;
+
+    }
+
+    .input-field .form .button svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .input-field .form .button:hover {
+        /* または、適切な位置に設定 */
+        border: none;
+        /* 枠線を無効にする */
+        background-color: #BBE3F5;
+        border-radius: 0.5rem;
+        width: 3rem;
+        height: 3rem; /* ホバー時のリンクのスタイル */
+
+
+    }
+
+</style>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+</head>
+
+<body>
+<header style="margin-left: 7%;background-color: #282828;color: #56a88f">
+    <h1 style="" class="title">3AI揃えば文殊の知恵</h1>
+</header>
+
+
+<div id="navArea">
+    <!-- サイドバー -->
+    <nav>
+        <div class="nav_header">
+            <ul class="menu">
+                <li><a href="{% url 'chat:create_room' %}">+ New Room</a></li>
+            </ul>
         </div>
-        <div class="row mt-3">
-            <div class="col-12">
-                <textarea placeholder="Enter the message" id="chat-message-input" rows="5" class="form-control" style="resize: none;"></textarea>
-            </div>
+            <div class="nav_header">
+            <ul class="menu">
+                <li><a href="{% url 'chat:delete_room' room.pk %}">削除</a></li>
+                <li><a href="{% url 'chat:update_room' room.pk %}">更新</a></li>
+            </ul>
         </div>
-        <div class="row mt-2">
-            <div class="col-12">
-                <button type="submit" id="submit-chat-message" class="btn btn-primary btn-block">Send (Ctrl + Enter)</button>
-            </div>
+
+        <div class="inner">
+            <ul class="member">
+                <!-- todo: アイコン画像 -->
+
+                <!--
+            <li>{{ room.messages.ordering.0.content|linebreaksbr }}</li>
+            -->
+                <h6 style="text-align:center;color:White">- このchatの使用AI -</h6>
+
+                {% if room.ChatGPT %}
+                    <li>chatGPT</li>
+                {% endif %}
+                {% if room.Claude2 %}
+                    <li>Claude2</li>
+                {% endif %}
+                {% if room.LLaMA %}
+                    <li>LLaMa</li>
+                {% endif %}
+                {% if room.PaLM2 %}
+                    <li>PALM2</li>
+                {% endif %}
+
+            </ul>
+            <ul class="display_room">
+                <!-- todo: 中央揃えにする -->
+
+                {% for monoroom in rooms %}
+                    {% if monoroom.name == room.name %}
+                        <li style="background-color: #5c726e"><a
+                                href="{% url 'chat:enter_room' monoroom.pk %}">{{ monoroom.name }}</a>
+                        </li>
+                    {% else %}
+                        <li><a href="{% url 'chat:enter_room' monoroom.pk %}">{{ monoroom.name }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
         </div>
+
+        <div class="nav_footter" style="margin-left: 3%">
+            <p style="text-align: center">【 UserNme：{{ user.username }} 】</p>
+            <br>
+            <a href="{% url 'accounts:logout' %}" class="btn btn-outline-primary cancel-button"
+               style="color: #9EC3BC;border-color: #9EC3BC">log out</a>
+
+        </div>
+    </nav>
+    <!--  -->
+    <div class="toggle-btn">
+        <!-- <span>ほげ</span>
+        <span>へっこ</span>
+        <span>へろー</span> -->
     </div>
 </div>
-<div class="row justify-content-center mt-3">
-    <div class="col-12">
-        <div id="chat-log">
+
+
+<div class="container">
+    <div class="main">
+        <div class="b-example-divider b-example-vr"></div>
+        <!-- .d-flex -->
+        <!-- 背景色はここで変える -->
+        <div class="chat bg-white">
+
+
             {% for message in room.messages.ordering %}
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-12">
-                            <span class="card-username">{{ message.owner|stringformat:"s" }}</span>
-                            <time class="card-datetime" datetime="{{ message.created_at|date:'Y-m-d' }}">(created at {{ message.created_at|date:'Y-m-d H:i:s' }})</time>
+                {% if message.owner|stringformat:"s" == "chatGPT" %}
+                    <!-- .message-icon -->
+                    <div class="message d-flex flex-row align-items-start mb-4">
+                        <div class="icon">
+                            <div class="message-icon4 rounded bg-your-color text-white fs-3">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>{{ message.owner|stringformat:"s" }}
+
+                            </p>
+
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 card-content">
+                        <!-- .message-icon -->
+                        <p class="message-text4 p-2 ms-2 mb-0 bg-your-color">
                             {{ message.content|linebreaksbr }}
-                        </div>
+                            <br>
+                            <time style="font-size: 0.3rem;" class="card-datetime"
+                                  datetime="{{ message.created_at|date:'Y-m-d' }}">(created
+                                at {{ message.created_at|date:'Y-m-d H:i:s' }})
+                            </time>
+                        </p>
+                        <!-- .message-text -->
                     </div>
-                </div>
-            </div>
+                {% elif message.owner|stringformat:"s" == "Claude2" %}
+                    <!-- .message -->
+                    <div class="message d-flex flex-row align-items-start mb-4">
+                        <div class="icon">
+                            <div class="message-icon3 rounded bg-your-color text-white fs-3">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>{{ message.owner|stringformat:"s" }}</p>
+                        </div>
+                        <!-- .message-icon -->
+                        <p class="message-text3 p-2 ms-2 mb-0 bg-your-color">
+                            {{ message.content|linebreaksbr }}
+                            <br>
+                            <time style="font-size: 0.3rem;" class="card-datetime"
+                                  datetime="{{ message.created_at|date:'Y-m-d' }}">(created
+                                at {{ message.created_at|date:'Y-m-d H:i:s' }})
+                            </time>
+                        </p>
+                        <!-- .message-text -->
+                    </div>
+
+                {% elif message.owner|stringformat:"s" == "LLaMA" %}
+                    <!-- .message -->
+                    <div class="message d-flex flex-row align-items-start mb-4">
+                        <div class="icon">
+                            <div class="message-icon2 rounded bg-your-color text-white fs-3">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>{{ message.owner|stringformat:"s" }}</p>
+                        </div>
+                        <!-- .message-icon -->
+                        <p class="message-text2 p-2 ms-2 mb-0 bg-your-color">
+                            {{ message.content|linebreaksbr }}
+                            <br>
+                            <time style="font-size: 0.3rem;" class="card-datetime"
+                                  datetime="{{ message.created_at|date:'Y-m-d' }}">(created
+                                at {{ message.created_at|date:'Y-m-d H:i:s' }})
+                            </time>
+                        </p>
+                        <!-- .message-text -->
+                    </div>
+                {% elif message.owner|stringformat:"s" == "PaLM2" %}
+                    <div class="message d-flex flex-row align-items-start mb-4">
+                        <div class="icon">
+                            <div class="message-icon1 rounded bg-your-color text-white fs-3">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>{{ message.owner|stringformat:"s" }}</p>
+                        </div>
+                        <!-- .message-icon -->
+                        <p class="message-text1 p-2 ms-2 mb-0 bg-your-color">
+                            {{ message.content|linebreaksbr }}
+                            <br>
+                            <time style="font-size: 0.3rem;" class="card-datetime"
+                                  datetime="{{ message.created_at|date:'Y-m-d' }}">(created
+                                at {{ message.created_at|date:'Y-m-d H:i:s' }})
+                            </time>
+                        </p>
+                        <!-- .message-text -->
+                    </div>
+                {% else %}
+                    <!-- .message -->
+                    <div class="message-me d-flex flex-row-reverse align-items-start mb-4">
+                        <div class="icon">
+                            <div class="message-icon-me rounded bg-your-color text-white fs-3">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>{{ message.owner|stringformat:"s" }}</p>
+                        </div>
+                        <!-- .message-icon -->
+                        <p class="message-text-me p-2 me-2 mb-0 bg-your-color">
+                            {{ message.content|linebreaksbr }}
+                            <br>
+                            <time style="font-size: 0.3rem;" class="card-datetime"
+                                  datetime="{{ message.created_at|date:'Y-m-d' }}">(created
+                                at {{ message.created_at|date:'Y-m-d H:i:s' }})
+                            </time>
+                        </p>
+                        <!-- .message-text -->
+                    </div>
+
+                {% endif %}
             {% empty %}
             {% endfor %}
         </div>
-    </div>
-</div>
 
-<template id="card-template">
-    <div class="card">
-        <div class="card-body card-font">
-            <div class="row">
-                <div class="col-12">
-                    <span class="card-username"></span>
-                    <time class="card-datetime" datetime=""></time>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12 card-content"></div>
-            </div>
+        <!-- .message -->
+        <div class="input-field d-flex flex-row align-items-end mb-5">
+            <dev action="#" class="form">
+                <input type="text" name="name" id="chat-message-input" placeholder="チャットを入力" class="textbox"/>
+                <!-- <input value="▶" id="button2" class="botton" /> -->
+                <button id="button2" class="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         class="bi bi-send-fill"
+                         viewBox="0 0 16 16">
+                        <path
+                                d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+                    </svg>
+                </button>
+            </dev>
         </div>
     </div>
-</template>
-{% endblock %}
+    <!-- .chat -->
+</div>
+<!-- .container -->
+</div>
+<!-- .main -->
 
-{% block bodyjs %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
 <script>
-(function() {
-    let g_socket = undefined;
+    (function () {
+        let g_socket = undefined;
 
-    // setup message
-    const chatMessageInput = document.querySelector('#chat-message-input');
-    const submitChatMessage = document.querySelector('#submit-chat-message');
-    submitChatMessage.addEventListener('click', (event) => {
-        const message = chatMessageInput.value.trim();
+        // setup message
+        const chatMessageInput = document.querySelector('#chat-message-input');
+        const submitChatMessage = document.querySelector('#button2');
+        submitChatMessage.addEventListener('click', (event) => {
+            const message = chatMessageInput.value.trim();
 
-        if (g_socket && message && message.match(/\S/g)) {
-            const data = {
-                content: message,
+            if (g_socket && message && message.match(/\S/g)) {
+                const data = {
+                    content: message,
+                };
+                g_socket.send(JSON.stringify(data));
+                chatMessageInput.value = '';
+            }
+        });
+
+        chatMessageInput.focus();
+        chatMessageInput.addEventListener('keyup', (event) => {
+            // Check Ctrl key and Enter key
+            if (event.ctrlKey && (event.key === 'Enter')) {
+                submitChatMessage.click();
+            }
+        });
+
+        // initialization
+        const init = () => {
+            // create websocket
+            const wsScheme = (window.location.protocol === 'https:' ? 'wss' : 'ws');
+            const hostname = window.location.host;
+            const roomID = '{{ room.pk }}';
+            const url = `${wsScheme}://${hostname}/ws/chat/${roomID}`;
+            g_socket = new WebSocket(url);
+
+            // message received
+            g_socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const template = document.querySelector('#card-template');
+                const node = template.content.cloneNode(true);
+                const isSystem = (data.type !== 'user_message');
+                const fontColor = isSystem ? 'red' : 'black';
+                // setup target node
+                node.querySelector('.card-font').style.color = fontColor;
+                node.querySelector('.card-username').textContent = data.username;
+                node.querySelector('.card-datetime').textContent = data.datetime;
+                node.querySelector('.card-datetime').setAttribute('datetime', data.datetime);
+                node.querySelector('.card-content').textContent = data.content;
+                document.querySelector('#chat-log').appendChild(node);
             };
-            g_socket.send(JSON.stringify(data));
-            chatMessageInput.value = '';
+            g_socket.onerror = (event) => {
+                console.log(event);
+            };
+            g_socket.onclose = (event) => {
+                ;
+            };
+        };
+
+        document.addEventListener('DOMContentLoaded', init);
+    }());
+
+
+    //以下サイドバー
+    function openSidebar() {
+        const sidebar = document.querySelector("#navArea");
+        sidebar.classList.add("open");
+        sidebar.style.width = "100%"; // サイドバーを全画面に拡大
+    }
+
+    function closeSidebar() {
+        const sidebar = document.querySelector("#navArea");
+        sidebar.classList.remove("open");
+        sidebar.style.width = "auto"; // サイドバーの幅を自動調整
+    }
+
+    // ウィンドウの幅が変更されたときにサイドバーを制御
+    function handleSidebar() {
+        const windowWidth = window.innerWidth;
+        const smallScreenWidth = 1000; // 開く閾値
+
+        if (windowWidth <= smallScreenWidth) {
+            closeSidebar();
+        } else {
+            openSidebar();
         }
-    });
+    }
 
-    chatMessageInput.focus();
-    chatMessageInput.addEventListener('keyup', (event) => {
-        // Check Ctrl key and Enter key
-        if (event.ctrlKey && (event.key === 'Enter')) {
-            submitChatMessage.click();
-        }
-    });
+    // ページ読み込み時に初期状態を設定
+    handleSidebar();
 
-    // initialization
-    const init = () => {
-        // create websocket
-        const wsScheme = (window.location.protocol === 'https:' ? 'wss' : 'ws');
-        const hostname = window.location.host;
-        const roomID = '{{ room.pk }}';
-        const url = `${wsScheme}://${hostname}/ws/chat/${roomID}`;
-        g_socket = new WebSocket(url);
+    // ウィンドウの幅が変更されたときにサイドバーを制御
+    window.addEventListener("resize", handleSidebar);
 
-        // message received
-        g_socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const template = document.querySelector('#card-template');
-            const node = template.content.cloneNode(true);
-            const isSystem = (data.type !== 'user_message');
-            const fontColor = isSystem ? 'red' : 'black';
-            // setup target node
-            node.querySelector('.card-font').style.color = fontColor;
-            node.querySelector('.card-username').textContent = data.username;
-            node.querySelector('.card-datetime').textContent = data.datetime;
-            node.querySelector('.card-datetime').setAttribute('datetime', data.datetime);
-            node.querySelector('.card-content').textContent = data.content;
-            document.querySelector('#chat-log').appendChild(node);
-        };
-        g_socket.onerror = (event) => {
-            console.log(event);
-        };
-        g_socket.onclose = (event) => {
-            ;
-        };
+    let nav = document.querySelector("#navArea");
+    let btn = document.querySelector(".toggle-btn");
+    let mask = document.querySelector("#mask");
+
+    btn.onclick = () => {
+        nav.classList.toggle("open");
     };
 
-    document.addEventListener('DOMContentLoaded', init);
-}());
+    mask.onclick = () => {
+        nav.classList.toggle("open");
+    };
 </script>
-{% endblock %}
+
+</body>
+
+</html>

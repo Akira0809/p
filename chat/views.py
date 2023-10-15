@@ -86,3 +86,15 @@ class EnterRoom(LoginRequiredMixin, OnlyAssignedUserMixin, DetailView):
     model = models.Room
     template_name = 'chat/chat_room.html'
     context_object_name = 'room'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 自分がホストであるルームの一覧を取得
+        rooms = models.Room.objects.filter(host=self.request.user)
+
+        # コンテキストにルームの一覧を追加
+        context['rooms'] = rooms
+
+        return context
+

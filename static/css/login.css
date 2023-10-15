@@ -1,0 +1,55 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #282828;
+  font-family: sans-serif;
+}
+
+.nav {
+  height: 70px;
+  color: black;
+}
+
+/* アクティブなリンクの色を変更 */
+.nav-link.active {
+  color: blue; /* ここに好きな色を指定 */
+}
+
+/* 非アクティブなリンクの色を変更 */
+.nav-link {
+  color: #a9a9a9; /* ここに好きな色を指定 */
+}
+
+.nav-item {
+  width: 150px; /* 横幅を変更する値を指定 */
+  display: flex;
+  align-items: center;
+}
+
+.mb-3 {
+  width: 700px;
+  height: 500px;
+  background: #000;
+  color: #fff;
+  top: 50%;
+  left: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.title {
+  text-align: center;
+  margin-top: 20px;
+  padding: 5px;
+}
+
+.botton {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  text-align: center;
+}

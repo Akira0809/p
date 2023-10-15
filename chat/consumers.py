@@ -6,7 +6,7 @@ from . import models
 from django.contrib.auth.models import User  # DjangoのUserモデルをインポート
 import random
 
-import openai, environ, deepl, boto3, json, replicate
+import openai, environ, deepl, boto3, json, replicate, asyncio
 import google.generativeai as palm
 
 
@@ -333,19 +333,17 @@ class AI:
         return output_text
 
     def JAtoEN(self, input_text):
-        output_text = str(
-            self.translator.translate_text(
-                input_text, source_lang="JA", target_lang="EN-US"
-            )
+        output_text = self.translator.translate_text(
+            input_text,
+            source_lang="JA",
+            target_lang="EN-US"
         )
-        return output_text
+        return str(output_text)
 
     def ENtoJA(self, input_text):
-        output_text = str(
-            self.translator.translate_text(
-                input_text,
-                source_lang="EN",
-                target_lang="JA",
-            )
+        output_text = self.translator.translate_text(
+            input_text,
+            source_lang="EN",
+            target_lang="JA",
         )
-        return output_text
+        return str(output_text)
